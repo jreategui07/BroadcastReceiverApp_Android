@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.jonathanreategui.broadcastreceiverapp"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.jonathanreategui.broadcastreceiverapp"
