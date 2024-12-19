@@ -41,6 +41,8 @@ class MainActivity : ComponentActivity() {
 
                 var airplaneModeText by remember { mutableStateOf("Toggle airplane mode.") }
                 var bluetoothText by remember { mutableStateOf("Toggle bluetooth.") }
+                var batterySaverText by remember { mutableStateOf("Toggle Battery save.") }
+                var wifiStateText by remember { mutableStateOf("Toggle Wi-Fi.") }
 
                 setupAirplaneModeReceiver(context, onAirplaneModeChanged = { status ->
                     airplaneModeText = status
@@ -50,13 +52,23 @@ class MainActivity : ComponentActivity() {
                     bluetoothText = status
                 })
 
+                setupBatterySaverReceiver(context, onBatterySaverStatusChanged = { status ->
+                    batterySaverText = status
+                })
+
+                setupWifiStateReceiver(context, onWifiStateChanged = { status ->
+                    wifiStateText = status
+                })
+
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     MainContent(
                         airplaneModeText = airplaneModeText,
-                        bluetoothText = bluetoothText
+                        bluetoothText = bluetoothText,
+                        batterySaverText = batterySaverText,
+                        wifiStateText = wifiStateText
                     )
                 }
             }
@@ -96,21 +108,44 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
 
-@Composable
-fun AirplaneModeStatus(text: String) {
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
+    @Composable
+    private fun setupBatterySaverReceiver(
+        context: Context,
+        onBatterySaverStatusChanged: (String) -> Unit
     ) {
-        Text(text = text)
+        DisposableEffect(context) {
+            val batterySaverReceiver = BatterySaverReceiver(
+                onEnabled = { onBatterySaverStatusChanged("Battery saver: enabled.") },
+                onDisabled = { onBatterySaverStatusChanged("Battery saver: disabled.") }
+            )
+            batterySaverReceiver.register(context)
+            onDispose {
+                batterySaverReceiver.unregister(context)
+            }
+        }
     }
-    Spacer(modifier = Modifier.height(16.dp))
+
+    @Composable
+    private fun setupWifiStateReceiver(
+        context: Context,
+        onWifiStateChanged: (String) -> Unit
+    ) {
+        DisposableEffect(context) {
+            val wifiStateReceiver = WifiStateReceiver(
+                onEnabled = { onWifiStateChanged("Wi-Fi: enabled.") },
+                onDisabled = { onWifiStateChanged("Wi-Fi: disabled.") }
+            )
+            wifiStateReceiver.register(context)
+            onDispose {
+                wifiStateReceiver.unregister(context)
+            }
+        }
+    }
 }
 
 @Composable
-fun BluetoothStatus(text: String) {
+fun Description(text: String) {
     Box(
         modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
@@ -123,7 +158,9 @@ fun BluetoothStatus(text: String) {
 @Composable
 fun MainContent(
     airplaneModeText: String,
-    bluetoothText: String
+    bluetoothText: String,
+    batterySaverText: String,
+    wifiStateText: String,
 ) {
     Column(
         modifier = Modifier
@@ -132,8 +169,10 @@ fun MainContent(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        AirplaneModeStatus(airplaneModeText)
-        BluetoothStatus(bluetoothText)
+        Description(airplaneModeText)
+        Description(bluetoothText)
+        Description(batterySaverText)
+        Description(wifiStateText)
     }
 }
 
@@ -143,8 +182,10 @@ fun MainContent(
 fun MainContentPreview() {
     BroadcastReceiverAppTheme {
         MainContent(
-            airplaneModeText = "Airplane mode disabled.",
-            bluetoothText = "Bluetooth is enabled."
+            airplaneModeText = "Airplane mode: disabled.",
+            bluetoothText = "Bluetooth: enabled.",
+            batterySaverText = "Battery saver: disabled",
+            wifiStateText = "Wi-Fi: enabled"
         )
     }
 }
